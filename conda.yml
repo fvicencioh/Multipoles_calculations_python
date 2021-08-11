@@ -1,0 +1,29 @@
+name: bempp_prod
+channels:
+  - conda-forge
+  - defaults
+  - eumetsat
+dependencies:
+  - fftw3
+  - git
+  - jupyter
+  - llvmlite
+  - mako
+  - notebook
+  - numba
+  - numpy
+  - ocl-icd
+  - openblas=0.3.9
+  - pip
+  - plotly
+  - pocl
+  - pybind11
+  - pyopencl
+  - python
+  - scipy
+  - tbb
+  - pip:
+    - meshio
+    - "git+https://github.com/bempp/bempp-cl.git@master"
+    - "git+https://github.com/exafmm/exafmm-t.git@master"
+
