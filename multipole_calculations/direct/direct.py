@@ -6,26 +6,34 @@ from numba import jit
 def coulomb_phi_multipole(xq, q, p, Q):
     
     N = len(xq)
-    T2 = np.zeros((3,3))
     eps = 1e-15
     phi = np.zeros(N)
+    
+    T2 = np.zeros((N-1,3,3))
     
     for i in range(N):
         
         Ri = xq[i] - xq
         Rnorm = np.sqrt(np.sum((Ri*Ri), axis = 1) + eps*eps)
         
-        for j in np.where(Rnorm>1e-12)[0]:
-            
-            T0 = 1/Rnorm[j]
-            T1 = Ri[j,:]/Rnorm[j]**3
-            T2[:,:] = np.ones((3,3))*Ri[j,:]*np.transpose(np.ones((3,3))*Ri[j,:])/Rnorm[j]**5
-            
-            phi[i] += q[j]*T0 + np.sum(T1[:]*p[j,:]) + 0.5*np.sum(np.sum(T2[:,:]*Q[j,:,:], axis = 1), axis = 0)
+        Ri = np.delete(Ri, (3*i, 3*i+1, 3*i+2)).reshape((N-1,3))
+        Rnorm = np.delete(Rnorm, i)
+        q_temp = np.delete(q, i)
+        p_temp = np.delete(p, (3*i, 3*i+1, 3*i+2)).reshape((N-1,3))
+        Q_temp = np.delete(Q, (9*i, 9*i+1, 9*i+2, 9*i+3, 9*i+4, 9*i+5, 9*i+6, 9*i+7, 9*i+8)).reshape((N-1,3,3))
+        
+        T0 = 1./Rnorm[:]
+        T1 = np.transpose(Ri.transpose()/Rnorm**3)
+        T2[:,:,:] = np.ones((N-1,3,3))[:] * Ri.reshape((N-1,1,3)) * \
+                    np.transpose(np.ones((N-1,3,3))*Ri.reshape((N-1,1,3)), (0,2,1))/ \
+                    Rnorm.reshape((N-1,1,1))**5
+        phi[i] = np.sum(q_temp[:]*T0[:]) + np.sum(T1[:]*p_temp[:]) + 0.5*np.sum(np.sum(T2[:]*Q_temp[:],axis=1))
             
     return phi
 
-@jit(nopython=True)
+@jit(
+    nopython=True, parallel=False, error_model="numpy", fastmath=True
+)
 def coulomb_dphi_multipole(xq, q, p, Q, alpha, thole, polar_group, flag_polar_group):
     
     N = len(xq)
@@ -100,7 +108,9 @@ def coulomb_dphi_multipole(xq, q, p, Q, alpha, thole, polar_group, flag_polar_gr
         
     return dphi
 
-@jit(nopython=True)
+@jit(
+    nopython=True, parallel=False, error_model="numpy", fastmath=True
+)
 def coulomb_ddphi_multipole(xq, q, p, Q):
     
     T1 = np.zeros((3))
@@ -157,7 +167,9 @@ def coulomb_ddphi_multipole(xq, q, p, Q):
         
     return ddphi
 
-@jit(nopython=True)
+@jit(
+    nopython=True, parallel=False, error_model="numpy", fastmath=True
+)
 def coulomb_phi_multipole_Thole(xq, p, alpha, thole, polar_group, connections_12, pointer_connections_12, \
                                 connections_13, pointer_connections_13, p12scale, p13scale):
     
@@ -216,7 +228,9 @@ def coulomb_phi_multipole_Thole(xq, p, alpha, thole, polar_group, connections_12
     
     return phi
 
-@jit(nopython=True)
+@jit(
+    nopython=True, parallel=False, error_model="numpy", fastmath=True
+)
 def coulomb_dphi_multipole_Thole(xq, p, alpha, thole, polar_group, connections_12, pointer_connections_12, \
                                 connections_13, pointer_connections_13, p12scale, p13scale):
     
@@ -280,7 +294,9 @@ def coulomb_dphi_multipole_Thole(xq, p, alpha, thole, polar_group, connections_1
         
     return dphi
 
-@jit(nopython=True)
+@jit(
+    nopython=True, parallel=False, error_model="numpy", fastmath=True
+)
 def coulomb_ddphi_multipole_Thole(xq, p, alpha, thole, polar_group, connections_12, pointer_connections_12, \
                                  connections_13, pointer_connections_13, p12scale, p13scale):
     
@@ -352,6 +368,7 @@ def coulomb_ddphi_multipole_Thole(xq, p, alpha, thole, polar_group, connections_
         
     return ddphi
 
+
 def coulomb_energy_multipole(xq, q, p, p_pol, Q, alphaxx, thole, polar_group, \
                              connections_12, pointer_connections_12, \
                              connections_13, pointer_connections_13, \
@@ -397,6 +414,7 @@ def coulomb_energy_multipole(xq, q, p, p_pol, Q, alphaxx, thole, polar_group, \
     point_energy[:] = q[:]*phi[:] + np.sum(p[:] * dphi[:], axis = 1) + (np.sum(np.sum(Q[:]*ddphi[:], axis = 1), axis = 1))/6.
     
     return point_energy
+
 
 def compute_induced_dipole(xq, q, p, p_pol, Q, alpha, thole, polar_group, \
                            connections_12, pointer_connections_12, \

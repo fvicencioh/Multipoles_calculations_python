@@ -214,6 +214,37 @@ def get_coulomb_energy(x_q, q, p, p_pol, Q, alpha, ep_in, thole, polar_group, co
     
     return coulomb_energy
 
+def quick_compilation():
+    """
+    Quick compilation needed to Numba Jit
+    """
+    time_compilation_init = time.time()
+    
+    dummy = np.zeros((1))
+    dummy2 = np.zeros((1,3))
+    dummy3 = np.zeros((1,3,3))
+    dummy4 = np.zeros((3))
+    dummy5 = 1.
+    
+    compilation1 = get_induced_dipole(dummy2, dummy, dummy2, dummy2, dummy3, dummy3, \
+                                      dummy5, dummy4, dummy4, dummy4, dummy4, dummy4, \
+                                      dummy4, dummy2)
+    compilation2 = get_coulomb_energy(dummy2, dummy, dummy2, dummy2, dummy3, dummy3, \
+                                      dummy5, dummy4, dummy4, dummy4, dummy4, dummy4, \
+                                      dummy4, dummy5, dummy5)
+    
+    #compilation1 = coulomb_phi_multipole(dummy2, dummy, dummy2, dummy3)
+    #compilation2 = coulomb_dphi_multipole(dummy2, dummy, dummy2, dummy3, dummy3, dummy4, dummy4, False)
+    #compilation3 = coulomb_ddphi_multipole(dummy2, dummy, dummy2, dummy3)
+    #compilation4 = coulomb_phi_multipole_thole(dummy2, dummy2, dummy1, dummy4, dummy4, dummy4, dummy4, dummy4, dummy4, dummy5)
+    #compilation5 = coulomb_dphi_multipole_thole(dummy2, dummy2, dummy1, dummy4, dummy4, dummy4, dummy4, dummy4, dummy4, dummy5)
+    #compilation6 = coulomb_ddphi_multipole_thole(dummy2, dummy2, dummy1, dummy4, dummy4, dummy4, dummy4, dummy4, dummy4, dummy5)
+    
+    
+    time_compilation_final = time.time()
+    
+    print(F"Compilation time (Needed to Numba Jit): {time_compilation_final - time_compilation_init} seconds")
+
 def multipole_calculations(filename, grid_filename, ep_in, ep_ex, k, h, maxiter=100, gmres_maxiter=500, mu="None", tol=1e-2, gmres_tol=1e-5):
     
     global array_it, array_frame, it_count
@@ -229,6 +260,8 @@ def multipole_calculations(filename, grid_filename, ep_in, ep_ex, k, h, maxiter=
     
     if mu=="None":
         mu = np.zeros((Nq,3))
+    
+    time_init = time.time()
     
     grid = generate_nanoshaper_grid(grid_filename)
     
@@ -269,9 +302,15 @@ def multipole_calculations(filename, grid_filename, ep_in, ep_ex, k, h, maxiter=
         
         mu_b = mu.copy()
         
+        time_mu_init = time.time()
+        
         mu = get_induced_dipole(x_q, q, d, mu, Q, alpha, ep_in, thole, polar_group, \
                                 connections_12, connections_13, pointer_connections_12, \
                                 pointer_connections_13, dphi_solvent)
+        
+        time_mu_final = time.time()
+        
+        print(F"Compution time for induced dipole: {time_mu_final - time_mu_init} seconds")
         
         dipole_diff = np.max(np.sqrt(np.sum((np.linalg.norm(mu_b-mu,axis=1))**2)/len(mu)))
         if dipole_diff<tol:
@@ -290,8 +329,13 @@ def multipole_calculations(filename, grid_filename, ep_in, ep_ex, k, h, maxiter=
     ddphi_solvent = solvent_potential_second_derivate(x_q, h, neumann_space, dirichl_space, solution_neumann, solution_dirichl)
     
     G_diss_solv = solvation_energy_solvent(q, d, Q, phi_solvent[0], dphi_solvent, ddphi_solvent)
+    
+    time_energy_init = time.time()
+    
     G_diss_mult = get_coulomb_energy(x_q, q, d, mu, Q, alpha, ep_in, thole, polar_group, connections_12, \
                                      connections_13, pointer_connections_12, pointer_connections_13, p12scale, p13scale)
+    
+    time_energy_final = time.time()
     
     #Calcution of induced dipole in vacum:
     
@@ -329,6 +373,7 @@ def multipole_calculations(filename, grid_filename, ep_in, ep_ex, k, h, maxiter=
     total_energy = G_diss_solv + G_diss_mult - G_vacc
     
     print(F"Total solvation energy: {total_energy} [kcal/Mol]")
+    print(F"Compution time for Coulomb Energy: {time_energy_final - time_energy_init} seconds")
     print(F"Total time: {time_final - time_init} seconds.")
     
     
