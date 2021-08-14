@@ -9,6 +9,7 @@ from scipy.sparse.linalg import gmres
 
 from .direct.direct import compute_induced_dipole, coulomb_energy_multipole
 from .util.getData import *
+from .util.getMesh import *
 
 
 def generate_nanoshaper_grid(filename):
@@ -245,7 +246,7 @@ def quick_compilation():
     
     print(F"Compilation time (Needed to Numba Jit): {time_compilation_final - time_compilation_init} seconds")
 
-def multipole_calculations(filename, grid_filename, ep_in, ep_ex, k, h, maxiter=100, gmres_maxiter=500, mu="None", tol=1e-2, gmres_tol=1e-5):
+def multipole_calculations(file_path, ep_in, ep_ex, k, h, maxiter=100, gmres_maxiter=500, mu="None", tol=1e-2, gmres_tol=1e-5, external_mesh=False, grid_scale=1.0, probe_radius=1.4):
     
     global array_it, array_frame, it_count
     
@@ -254,7 +255,7 @@ def multipole_calculations(filename, grid_filename, ep_in, ep_ex, k, h, maxiter=
     x_q, q, d, Q, alpha, mass, polar_group, thole, \
            connections_12, connections_13, \
            pointer_connections_12, pointer_connections_13, \
-           p12scale, p13scale, N = read_tinker(filename,float)
+           p12scale, p13scale, N = read_tinker(file_path,float)
     
     Nq = len(q)
     
@@ -263,7 +264,32 @@ def multipole_calculations(filename, grid_filename, ep_in, ep_ex, k, h, maxiter=
     
     time_init = time.time()
     
-    grid = generate_nanoshaper_grid(grid_filename)
+    if external_mesh==False:
+        from multipole_calculations import multipole_calculations_dir_name
+        
+        filename = file_path.split("/")[-1]
+        mesh_dir = os.path.join(multipole_calculations_dir_name, "ExternalSoftware/NanoShaper/meshs/" + filename + "/")
+        
+        if not os.path.exists(mesh_dir + filename + ".face") \
+        and not os.path.exists(mesh_dir + filename + ".vert"):
+            
+            print("Creating mesh...")
+            
+            xyzr_filepath = file_path + ".xyzr"
+            get_mesh_files(xyzr_filepath, grid_scale, probe_radius)
+            split_mesh(mesh_dir + filename)
+            
+            grid = generate_nanoshaper_grid(mesh_dir + filename)
+            
+        else:
+            
+            print (F"Loading mesh from: {mesh_dir}")
+            grid = generate_nanoshaper_grid(mesh_dir + filename)
+    
+    else:
+        
+        print(F"Loading mesh from: {external_mesh}")
+        grid = generate_nanoshaper_grid(external_mesh)
     
     dirichl_space = bempp.api.function_space(grid, "DP", 0)
     neumann_space = bempp.api.function_space(grid, "DP", 0)

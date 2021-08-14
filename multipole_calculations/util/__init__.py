@@ -1,1 +1,1 @@
-from . import getData
+from multipole_calculations.util import *
