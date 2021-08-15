@@ -27,6 +27,10 @@ This will install the following dependencies:
 	* Pyopencl
 	* ExaFMM
 	* Bempp-cl
+
+Then, activate the environment with:
+
+	> conda activate bempp_prod
     
 #### Additional dependencies
 
