@@ -246,7 +246,7 @@ def quick_compilation():
     
     print(F"Compilation time (Needed to Numba Jit): {time_compilation_final - time_compilation_init} seconds")
 
-def multipole_calculations(file_path, ep_in, ep_ex, k, h, maxiter=100, gmres_maxiter=500, mu="None", tol=1e-2, gmres_tol=1e-5, external_mesh=False, grid_scale=1.0, probe_radius=1.4):
+def multipole_calculations(file_path, ep_in, ep_ex, k, h, maxiter=100, gmres_maxiter=500, mu="None", tol=1e-2, gmres_tol=1e-5, external_mesh=False, grid_scale=1.0, probe_radius=1.4, overwrite=False):
     
     global array_it, array_frame, it_count
     
@@ -270,8 +270,9 @@ def multipole_calculations(file_path, ep_in, ep_ex, k, h, maxiter=100, gmres_max
         filename = file_path.split("/")[-1]
         mesh_dir = os.path.join(multipole_calculations_dir_name, "ExternalSoftware/NanoShaper/meshs/" + filename + "/")
         
-        if not os.path.exists(mesh_dir + filename + ".face") \
-        and not os.path.exists(mesh_dir + filename + ".vert"):
+        if (not os.path.exists(mesh_dir + filename + ".face") \
+        or not os.path.exists(mesh_dir + filename + ".vert")) \
+        or overwrite:
             
             print("Creating mesh...")
             
