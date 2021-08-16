@@ -246,7 +246,45 @@ def quick_compilation():
     
     print(F"Compilation time (Needed to Numba Jit): {time_compilation_final - time_compilation_init} seconds")
 
-def multipole_calculations(file_path, ep_in, ep_ex, k, h, maxiter=100, gmres_maxiter=500, mu="None", tol=1e-2, gmres_tol=1e-5, external_mesh=False, grid_scale=1.0, probe_radius=1.4, overwrite=False):
+def multipole_calculations(file_path, ep_in, ep_ex, k, h, maxiter=100, gmres_maxiter=500, mu="None", assembler="dense", tol=1e-2, gmres_tol=1e-5, external_mesh=False, grid_scale=1.0, probe_radius=1.4, overwrite=False):
+    
+    """
+    Compute the solvation energy of the selected protein.
+    
+    Inputs:
+    
+    ---
+
+        file_path: (string) Path of the files used in the simulation without .xyz or .key extension
+        ep_in: (float) Dielectric constant of protein region.
+        ep_ex: (float) Dielectric constant of solvent region.
+        k: (float) Inverse of Debye length
+        h: Float number, distance for the central difference.
+        
+    Optional:
+    
+    ---
+    
+        maxiter: (int) Maximum number of iterations used to calculate the induced dipole.
+        gmres_maxiter: (int) Maximum number of iterations used by gmres to solve the linear system.
+        mu: (Nqx3) Initial induced dipole.
+        assembler: (string) Assembler used in the boundary operators. dense or fmm
+        tol: (float) Tolerance used to check the convergence of induced dipole.
+        gmres_tol: (float) Tolerance used by gmres.
+        external_mesh: (string) Path of the selected external mesh used in the simulation.
+        grid_scale: (float) Grid scale, higher values produce higher mesh densities.
+        probe_radius: (float) Probe radius used to generate the mesh.
+        overwrite: (bool) Makes a new mesh or use an old one.
+        
+        
+
+    Return:
+    
+    ---
+
+        total_energy: Solvation energy of the protein.
+        
+    """
     
     global array_it, array_frame, it_count
     
@@ -305,11 +343,6 @@ def multipole_calculations(file_path, ep_in, ep_ex, k, h, maxiter=100, gmres_max
     neumann_space = bempp.api.function_space(grid, "DP", 0)
     
     x_b = np.zeros((2*dirichl_space.global_dof_count))
-    
-    assembler="dense"
-    
-    if grid.number_of_elements>50000:
-        assembler="fmm"
     
     lhs = getLHS(dirichl_space, neumann_space, ep_in, ep_ex, k, assembler=assembler)
     
