@@ -259,7 +259,7 @@ def multipole_calculations(file_path, ep_in, ep_ex, k, h, maxiter=100, gmres_max
         ep_in: (float) Dielectric constant of protein region.
         ep_ex: (float) Dielectric constant of solvent region.
         k: (float) Inverse of Debye length
-        h: Float number, distance for the central difference.
+        h: (float) Distance for the central difference in numerical derivative of the reaction potential.
         
     Optional:
     
