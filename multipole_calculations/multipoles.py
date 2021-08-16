@@ -252,6 +252,15 @@ def multipole_calculations(file_path, ep_in, ep_ex, k, h, maxiter=100, gmres_max
     
     time_init = time.time()
     
+    if not os.path.exists(file_path+".xyzr"):
+        
+        print(F"{file_path}.xyzr file don't detected.")
+        print("Creating .xyzr file")
+        
+        tinker_to_xyzr(file_path)
+        
+        print("File Created")
+    
     x_q, q, d, Q, alpha, mass, polar_group, thole, \
            connections_12, connections_13, \
            pointer_connections_12, pointer_connections_13, \

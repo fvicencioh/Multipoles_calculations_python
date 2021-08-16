@@ -1,6 +1,87 @@
 import os
 import numpy as np
 
+def tinker_to_xyzr(filename):
+    
+    file_xyz = filename + ".xyz"
+    file_key = filename + ".key"
+    
+    with open(file_xyz, 'r') as f:
+        N = int(f.readline().split()[0])
+        
+    x = np.zeros(N)
+    y = np.zeros(N)
+    z = np.zeros(N)
+    r = np.zeros(N)
+    
+    atom_type  = np.chararray(N, itemsize=10)
+    
+    i = 0
+    header = 0
+    
+    xyz_file = open(file_xyz, 'r')
+    
+    for line in xyz_file:
+        line = line.split()
+        
+        if header==1:
+            
+            x[i] = np.float64(line[2])
+            y[i] = np.float64(line[3])
+            z[i] = np.float64(line[4])
+            
+            atom_type[i] = line[5]
+            
+            i+=1
+            
+        header = 1
+        
+    xyz_file.close()
+    
+    atom_class = {}
+    vdw_radii = {}
+    
+    with open(file_key, 'r') as f:
+        
+        line = f.readline().split()
+        
+        if line[0]=='parameters':
+            
+            file_key = line[1]
+            
+        print ('Reading parameters from '+file_key)
+        
+    key_file = open(file_key, 'r')
+        
+    for line in key_file:
+        
+        line = line.split()
+        
+        if len(line)>0:
+            
+            if line[0].lower()=='atom':
+                
+                atom_class[line[1]] = line[2]
+                
+            if line[0].lower()=='vdw' and line[1] not in vdw_radii:
+                
+                vdw_radii[line[1]] = np.float64(line[2])/2.
+                
+    key_file.close()
+                
+    for i in range(N):
+        
+        r[i] = vdw_radii[atom_class[atom_type[i].decode()]]
+        
+    data = np.zeros((N,4))
+    
+    data[:,0] = x[:]
+    data[:,1] = y[:]
+    data[:,2] = z[:]
+    data[:,3] = r[:]
+    
+    np.savetxt(filename+".xyzr", data, fmt='%5.6f')
+
 def find_multipole(multipole_list, connections, atom_type, pos, i, N):
 #   filter possible multipoles by atom type
     atom_possible = []

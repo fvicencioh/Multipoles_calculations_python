@@ -59,7 +59,7 @@ More details of the required and optional arguments in the sample file
 
 ##### Files required
 
-    1. You need a `.xyz` file with atom positions, the `.xyz` and `.key` filename must be the same.
-	2. This code generates a mesh in format `.face` and `.vert`. a `.xyzr` file is required, it must be in the same directory of the `.xyz` and `.key` files.
+   	1. You need a `.xyz` file with atom positions, the `.xyz` and `.key` filename must be the same.
+	2. This code generates a mesh in format `.face` and `.vert`, a `.xyzr` file is required, it must be in the same directory of the `.xyz` and `.key` files. If the `.xyzr` file doesn's exists, this code can automatically generate it using `.xyz` and `.key` files.
 	3. AMOEBA uses a `.key` file with the parameterization. The parameters can be included in `.key` file or redirect to a predefined parameter file like `amoebapro13.prm`, same as 1pgb example.
 
